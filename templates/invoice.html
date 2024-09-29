@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoice.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: left; }
+        h2, h3, h4 { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h2>KIRPA JEWELLERS</h2>
+    <p>Your Company Address, Kolhapur, Maharashtra</p>
+    
+    <h3>Invoice #{{ invoice.id }}</h3>
+    <p><strong>Customer Name:</strong> {{ invoice.customer.name }}</p>
+    <p><strong>Address:</strong> {{ invoice.customer.address }}</p>
+    <p><strong>Contact:</strong> {{ invoice.customer.contact }}</p>
+    <p><strong>Date:</strong> {{ invoice.date.strftime('%Y-%m-%d') }}</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Gross Wt (gm)</th>
+                <th>Net Wt (gm)</th>
+                <th>Purity</th>
+                <th>Labour</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.gross_weight }}</td>
+                <td>{{ item.net_weight }}</td>
+                <td>{{ item.purity }}</td>
+                <td>{{ item.labour_charges }}</td>
+                <td>{{ item.gross_weight + item.labour_charges }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h4>CGST: {{ cgst }}</h4>
+    <h4>SGST: {{ sgst }}</h4>
+    <h4><strong>Total Amount with GST:</strong> {{ total_amount_with_gst }}</h4>
+</body>
+</html>
