@@ -4,145 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Management</title>
-
-    <!-- Include Bootstrap for modal (optional) -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Your Custom CSS -->
+    <link href="/static/css/styles.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Header with navigation buttons -->
-    <header>
-        <h1>Inventory Management</h1>
-        <button onclick="location.href='/'">Home</button>
-        <button onclick="location.href='/generate_invoice_page'">Generate Invoice</button>
-    </header>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Invoice App</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">Inventory</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/generate_invoice_page">Generate Invoice</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <h2>Add Product</h2>
-    <form action="/add_product" method="POST">
-        <input type="text" name="name" placeholder="Name" required>
-        <input type="text" name="hsn" placeholder="HSN" required>
-        <input type="number" step="0.01" name="rate" placeholder="Rate" required>
-        <button type="submit">Add Product</button>
-    </form>
-
-    <h2>Product List</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>HSN</th>
-                <th>Rate</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>{{ product.name }}</td>
-                <td>{{ product.hsn }}</td>
-                <td>{{ product.rate }}</td>
-                <td>
-                    <!-- Delete Button -->
-                    <form action="/delete_product/{{ product.id }}" method="POST" style="display:inline;">
-                        <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this product?');">
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- Generic Update Button -->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal">
-        Update Product
-    </button>
-
-    <!-- Modal for Updating Product -->
-    <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="updateModalLabel">Update Product</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateProductForm">
-                        <!-- Dropdown to Select Product to Update -->
-                        <label for="selectProduct">Select Product:</label>
-                        <select id="selectProduct" name="product_id" class="form-select">
-                            <option value="">Choose a product</option>
-                            {% for product in products %}
-                            <option value="{{ product.id }}">{{ product.name }}</option>
-                            {% endfor %}
-                        </select>
+    <!-- Main content -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-body">
+                        <h2>Inventory Management</h2>
                         
-                        <!-- Fields to Update Product Details -->
-                        <label for="name">Product Name:</label>
-                        <input type="text" id="name" name="name" class="form-control" required><br>
+                        <!-- Add Product Form -->
+                        <form action="/add_product" method="POST">
+                            <div class="mb-3">
+                                <input type="text" name="name" class="form-control" placeholder="Product Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" name="hsn" class="form-control" placeholder="HSN" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="number" step="0.01" name="rate" class="form-control" placeholder="Rate" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">Add Product</button>
+                        </form>
 
-                        <label for="hsn">HSN:</label>
-                        <input type="text" id="hsn" name="hsn" class="form-control" required><br>
+                        <!-- Product List -->
+                        <h4 class="mt-5">Product List</h4>
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>HSN</th>
+                                    <th>Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.hsn }}</td>
+                                    <td>{{ product.rate }}</td>
+                                    <td>
+                                        <form action="/delete_product/{{ product.id }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?');">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
 
-                        <label for="rate">Rate:</label>
-                        <input type="number" id="rate" name="rate" class="form-control" required><br>
+                        <!-- Modal for Updating Product -->
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal">Update Product</button>
 
-                        <button type="button" class="btn btn-primary" id="submitUpdate">Submit</button>
-                    </form>
+                        <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="updateModalLabel">Update Product</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="updateProductForm">
+                                            <label for="selectProduct">Select Product:</label>
+                                            <select id="selectProduct" name="product_id" class="form-select">
+                                                <option value="">Choose a product</option>
+                                                {% for product in products %}
+                                                <option value="{{ product.id }}" 
+                                                        data-name="{{ product.name }}" 
+                                                        data-hsn="{{ product.hsn }}" 
+                                                        data-rate="{{ product.rate }}">
+                                                    {{ product.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+
+                                            <label for="name" class="form-label">Product Name:</label>
+                                            <input type="text" id="name" name="name" class="form-control" required>
+
+                                            <label for="hsn" class="form-label">HSN:</label>
+                                            <input type="text" id="hsn" name="hsn" class="form-control" required>
+
+                                            <label for="rate" class="form-label">Rate:</label>
+                                            <input type="number" id="rate" name="rate" class="form-control" required>
+
+                                            <button type="button" class="btn btn-primary mt-3" id="submitUpdate">Submit</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- JavaScript for Autofill -->
+                        <script>
+
+                        document.getElementById('submitUpdate').addEventListener('click', function () {
+                            const productId = document.getElementById('selectProduct').value;
+                            const name = document.getElementById('name').value;
+                            const hsn = document.getElementById('hsn').value;
+                            const rate = document.getElementById('rate').value;
+
+                            if (productId && name && hsn && rate) {
+                                // Send the updated product data to the server using fetch
+                                fetch(`/update_product/${productId}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: name,
+                                        hsn: hsn,
+                                        rate: rate
+                                    }),
+                                }).then(response => {
+                                    if (response.ok) {
+                                        alert('Product updated successfully!');
+                                        location.reload();  // Reload the page to reflect changes
+                                    } else {
+                                        alert('Failed to update the product.');
+                                    }
+                                }).catch(error => {
+                                    console.error('Error updating product:', error);
+                                    alert('Failed to update the product.');
+                                });
+                            } else {
+                                alert('Please fill in all fields.');
+                            }
+                        });
+                        document.getElementById('selectProduct').addEventListener('change', function() {
+                            var selectedProduct = this.options[this.selectedIndex];
+
+                            // Retrieve the data attributes from the selected option
+                            var name = selectedProduct.getAttribute('data-name');
+                            var hsn = selectedProduct.getAttribute('data-hsn');
+                            var rate = selectedProduct.getAttribute('data-rate');
+
+                            // Autofill the form fields with the selected product's data
+                            document.getElementById('name').value = name ? name : '';
+                            document.getElementById('hsn').value = hsn ? hsn : '';
+                            document.getElementById('rate').value = rate ? rate : '';
+                        });
+                        </script>
+
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // JavaScript to handle product updates
-        document.getElementById('submitUpdate').addEventListener('click', function () {
-            const productId = document.getElementById('selectProduct').value;
-            const name = document.getElementById('name').value;
-            const hsn = document.getElementById('hsn').value;
-            const rate = document.getElementById('rate').value;
-
-            if (productId && name && hsn && rate) {
-                // Send the updated product data to the server using fetch
-                fetch(`/update_product/${productId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        hsn: hsn,
-                        rate: rate
-                    }),
-                }).then(response => {
-                    if (response.ok) {
-                        alert('Product updated successfully!');
-                        location.reload();  // Reload the page to reflect changes
-                    } else {
-                        alert('Failed to update the product.');
-                    }
-                }).catch(error => {
-                    console.error('Error updating product:', error);
-                    alert('Failed to update the product.');
-                });
-            } else {
-                alert('Please fill in all fields.');
-            }
-        });
-
-        // Pre-fill the form based on the selected product
-        document.getElementById('selectProduct').addEventListener('change', function () {
-            const productId = this.value;
-            
-            if (productId) {
-                fetch(`/get_product/${productId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('name').value = data.name;
-                        document.getElementById('hsn').value = data.hsn;
-                        document.getElementById('rate').value = data.rate;
-                    });
-            }
-        });
-    </script>
+    <!-- Include JS for Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
