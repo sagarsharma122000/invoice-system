@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Management</title>
+</head>
+<body>
+    <h1>Inventory Management</h1>
+
+    <h2>Add Product</h2>
+    <form action="/add_product" method="POST">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="text" name="hsn" placeholder="HSN" required>
+        <input type="number" step="0.01" name="rate" placeholder="Rate" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Product List</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>HSN</th>
+                <th>Rate</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.hsn }}</td>
+                <td>{{ product.rate }}</td>
+                <td>
+                    <form action="/update_product/{{ product.id }}" method="POST" style="display:inline;">
+                        <input type="text" name="name" value="{{ product.name }}" required>
+                        <input type="text" name="hsn" value="{{ product.hsn }}" required>
+                        <input type="number" step="0.01" name="rate" value="{{ product.rate }}" required>
+                        <button type="submit">Update</button>
+                    </form>
+                    <form action="/delete_product/{{ product.id }}" method="POST" style="display:inline;">
+                        <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this product?');">
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
