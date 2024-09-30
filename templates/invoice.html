@@ -25,7 +25,7 @@
         <thead>
             <tr>
                 <th>Item</th>
-                <th>Qty</th>
+                <th>Rate</th>
                 <th>Gross Wt (gm)</th>
                 <th>Net Wt (gm)</th>
                 <th>Purity</th>
@@ -37,12 +37,12 @@
             {% for item in items %}
             <tr>
                 <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }}</td>
+                <td>{{ item.product_rate }}</td>
                 <td>{{ item.gross_weight }}</td>
                 <td>{{ item.net_weight }}</td>
                 <td>{{ item.purity }}</td>
                 <td>{{ item.labour_charges }}</td>
-                <td>{{ item.gross_weight + item.labour_charges }}</td>
+                <td>{{ item.net_weight * item.product_rate + item.labour_charges * item.net_weight}}</td>
             </tr>
             {% endfor %}
         </tbody>
