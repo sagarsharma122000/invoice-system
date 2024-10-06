@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Your Custom CSS -->
     <link href="/static/css/invoicestyles.css" rel="stylesheet">
-    <title>Generate Invoice</title>
 </head>
 <body>
     <!-- Navbar -->
@@ -26,6 +25,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/generate_invoice_page">Generate Invoice</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/search_invoice">Search Invoice</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -38,7 +40,13 @@
                 <div class="card">
                     <div class="card-body">
                         <h2>Generate Invoice</h2>
-                        <form action="{{ url_for('generate_invoice') }}" method="POST">
+
+                        <!-- Alert Placeholder -->
+                        <div id="stockAlert" class="alert alert-warning d-none" role="alert">
+                            Insufficient stock for selected products!
+                        </div>
+
+                        <form id="invoiceForm" action="{{ url_for('generate_invoice') }}" method="POST">
                             <!-- Customer Details -->
                             <div class="mb-3">
                                 <label for="customer_name" class="form-label">Customer Name:</label>
@@ -61,28 +69,30 @@
                                         <th>Product</th>
                                         <th>Type</th>
                                         <th>Rate</th>
-                                        <th>Gross Weight</th>
-                                        <th>Nett. Weight</th>
+                                        <th>Gross Wt.(gm)</th>
+                                        <th>Net Wt.(gm)</th>
+                                        <th>Labour/gm</th>
                                         <th>Total Price</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><input type="text" class="form-control invoice_name" name="invoice_name[]" min="1" value="1"></td>
+                                        <td><input type="text" class="form-control invoice_name" name="invoice_name[]" placeholder="Enter Name"></td>
                                         <td>
                                             <select class="form-select product-dropdown" name="products[]">
                                                 <option value="">Product Type</option>
                                                 {% for product in products %}
-                                                <option value="{{ product.id }}" data-rate="{{ product.rate }}">
+                                                <option value="{{ product.id }}" data-rate="{{ product.rate }}" data-quantity="{{ product.total_quantity }}">
                                                     {{ product.name }}
                                                 </option>
                                                 {% endfor %}
                                             </select>
                                         </td>
                                         <td class="rate">0</td>
-                                        <td><input type="number" class="form-control gross_weight" name="gross_weight[]" step="any" value="1"></td>
-                                        <td><input type="number" class="form-control net_weight" name="net_weight[]" step="any" value="1"></td>
+                                        <td><input type="number" class="form-control gross_weight" name="gross_weight[]" step="any" value="1" min="0" placeholder="Enter weight"></td>                                      
+                                        <td><input type="number" class="form-control net_weight" name="net_weight[]" step="any" value="1" min="0" placeholder="Enter weight"></td>
+                                        <td><input type="number" class="form-control labour_charge" name="labour_charge[]" placeholder="Labour/gm" value="0" step="any"></td>
                                         <td class="total-price">0</td>
                                         <td><button type="button" class="btn btn-danger remove-row">Remove</button></td>
                                     </tr>
@@ -99,10 +109,6 @@
                                 <label for="sgst" class="form-label">SGST:</label>
                                 <input type="text" id="sgst" name="sgst" class="form-control" placeholder="0">
                             </div>
-                            <div class="mt-3">
-                                <label for="labour_charge" class="form-label">Labour Charges:</label>
-                                <input type="text" id="labour_charge" name="labour_charge" class="form-control" placeholder="0">
-                            </div>
 
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-success">Generate Invoice</button>
@@ -114,22 +120,23 @@
         </div>
     </div>
 
-
     <!-- Include JS for Bootstrap (optional) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom JS -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Function to calculate total price based on rate and net weight
+            // Function to calculate total price based on rate, net weight, and labour charge
             function calculateTotalPrice(row) {
                 let rate = parseFloat(row.querySelector('.rate').textContent) || 0;
                 let netWeight = parseFloat(row.querySelector('.net_weight').value) || 0;
-                let totalPrice = rate * netWeight;
+                let labourCharge = parseFloat(row.querySelector('.labour_charge').value) || 0;
+                
+                let totalPrice = (rate * netWeight) + (labourCharge * netWeight); // Updated calculation
                 row.querySelector('.total-price').textContent = totalPrice.toFixed(2);
             }
 
-            // Function to attach event listeners to product dropdowns and net weight inputs
+            // Function to attach event listeners to product dropdowns, net weight and labour charge inputs
             function attachEventListeners() {
                 document.querySelectorAll('.product-dropdown').forEach(function(dropdown) {
                     dropdown.addEventListener('change', function() {
@@ -140,10 +147,10 @@
                     });
                 });
 
-                document.querySelectorAll('.net_weight').forEach(function(input) {
+                document.querySelectorAll('.net_weight, .labour_charge').forEach(function(input) {
                     input.addEventListener('input', function() {
                         let row = input.closest('tr');
-                        calculateTotalPrice(row); // Recalculate total price when net weight changes
+                        calculateTotalPrice(row); // Recalculate total price when net weight or labour charge changes
                     });
                 });
 
@@ -151,8 +158,32 @@
                     button.addEventListener('click', function() {
                         let row = button.closest('tr');
                         row.remove();
+                        checkStock(); // Recheck stock when a row is removed
                     });
                 });
+            }
+
+            // Function to check stock availability
+            function checkStock() {
+                let stockAlert = document.getElementById('stockAlert');
+                let rows = document.querySelectorAll('#invoiceTable tbody tr');
+                let insufficientStock = false;
+
+                rows.forEach(function(row) {
+                    let dropdown = row.querySelector('.product-dropdown');
+                    let netWeight = parseFloat(row.querySelector('.net_weight').value) || 0;
+                    let availableQuantity = parseFloat(dropdown.selectedOptions[0].getAttribute('data-quantity')) || 0;
+
+                    if (netWeight > availableQuantity) {
+                        insufficientStock = true;
+                    }
+                });
+
+                if (insufficientStock) {
+                    stockAlert.classList.remove('d-none'); // Show the alert
+                } else {
+                    stockAlert.classList.add('d-none'); // Hide the alert
+                }
             }
 
             // Call it for initial rows
@@ -164,20 +195,21 @@
                 const newRow = document.createElement('tr');
                 
                 newRow.innerHTML = `
-                    <td><input type="text" class="form-control invoice_name" name="invoice_name[]" min="1" value="1"></td>
+                    <td><input type="text" class="form-control invoice_name" name="invoice_name[]" placeholder="Enter Name"></td>
                     <td>
                         <select class="form-select product-dropdown" name="products[]">
                             <option value="">Product Type</option>
                             {% for product in products %}
-                            <option value="{{ product.id }}" data-rate="{{ product.rate }}">
+                            <option value="{{ product.id }}" data-rate="{{ product.rate }}" data-quantity="{{ product.total_quantity }}">
                                 {{ product.name }}
                             </option>
                             {% endfor %}
                         </select>
                     </td>
                     <td class="rate">0</td>
-                    <td><input type="number" class="form-control gross_weight" name="gross_weight[]" min="1" value="1"></td>
-                    <td><input type="number" class="form-control net_weight" name="net_weight[]" min="1" value="1"></td>
+                    <td><input type="number" class="form-control gross_weight" name="gross_weight[]" step="any" value="1" min="0" placeholder="Enter weight"></td>                                      
+                    <td><input type="number" class="form-control net_weight" name="net_weight[]" step="any" value="1" min="0" placeholder="Enter weight"></td>
+                    <td><input type="number" class="form-control labour_charge" name="labour_charge[]" placeholder="Labour/gm" value="0" step="any"></td>
                     <td class="total-price">0</td>
                     <td><button type="button" class="btn btn-danger remove-row">Remove</button></td>
                 `;
@@ -186,6 +218,19 @@
 
                 // Reattach event listeners for new dropdowns and inputs
                 attachEventListeners();
+            });
+
+            // Check stock when form is submitted
+            document.getElementById('invoiceForm').addEventListener('submit', function(event) {
+                checkStock(); // Check stock before form submission
+                if (document.getElementById('stockAlert').classList.contains('d-none')) {
+                    // If there's no alert, proceed with submission
+                    return true; 
+                } else {
+                    // If there's an alert, prevent submission
+                    event.preventDefault();
+                    alert("Please resolve stock issues before submitting the invoice.");
+                }
             });
         });
     </script>

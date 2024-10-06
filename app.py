@@ -1,7 +1,8 @@
-from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, send_file
+from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, send_file, send_from_directory
 from models import db, Customer, Product, Invoice, InvoiceItem
 import pdfkit
 import os
+import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -97,6 +98,48 @@ def generate_invoice_page():
     products = Product.query.all()
     return render_template('generate_invoice.html', products=products)
 
+
+
+# Assuming your PDFs are saved in a 'PDF' folder in the project directory
+PDF_FOLDER = os.path.join(os.getcwd(), 'PDF')
+
+from datetime import datetime
+
+@app.route('/search_invoice', methods=['GET', 'POST'])
+def search_invoice():
+    pdf_files = []
+    search_performed = False
+    
+    if request.method == 'POST':
+        search_date = request.form.get('search_date', '').strip()
+        search_mobile = request.form.get('search_mobile', '').strip()
+        
+        # If search_date is provided, convert it from YYYY-MM-DD to DDMMYYYY
+        if search_date:
+            try:
+                search_date = datetime.strptime(search_date, '%Y-%m-%d').strftime('%d%m%Y')
+            except ValueError:
+                # Handle cases where the date format is incorrect
+                search_date = ''
+        
+        # Search the PDF folder for files that match the search criteria
+        if os.path.exists(PDF_FOLDER):
+            for filename in os.listdir(PDF_FOLDER):
+                # Check if the file matches the search date and/or mobile number
+                if (search_date in filename) and (search_mobile in filename):
+                    pdf_files.append(filename)
+
+        search_performed = True
+
+    return render_template('search_invoice.html', pdf_files=pdf_files, search_performed=search_performed)
+
+
+# Route to open/view the PDF files
+@app.route('/view_pdf/<filename>')
+def view_pdf(filename):
+    return send_from_directory(PDF_FOLDER, filename)
+
+
 # Generate Invoice
 @app.route('/generate_invoice', methods=['GET', 'POST'])
 def generate_invoice():
@@ -107,6 +150,7 @@ def generate_invoice():
     gross_weights = request.form.getlist('gross_weight[]')
     net_weights = request.form.getlist('net_weight[]')
     invoice_name = request.form.getlist('invoice_name[]')
+    labour_chargess = request.form.getlist('labour_charge[]')
     
     customer = Customer(name=customer_name, address=customer_address, contact=customer_contact)
     db.session.add(customer)
@@ -116,8 +160,8 @@ def generate_invoice():
     db.session.add(invoice)
     db.session.commit()
 
-    labour_charge = request.form.get('labour_charge', '0') 
-    labour_charge = float(labour_charge) if labour_charge else 0 
+    # labour_charge = request.form.get('labour_charge', '0') 
+    # labour_charge = float(labour_charge) if labour_charge else 0 
 
     items = []
     total_amount = 0
@@ -128,12 +172,22 @@ def generate_invoice():
         product_name = invoice_name[idx]
         gross_weight = float(gross_weights[idx])
         net_weight = float(net_weights[idx])
+        labour_charge = float(labour_chargess[idx]) if labour_chargess[idx] else 0 
         item = InvoiceItem(invoice_name = product_name, invoice_id=invoice.id, product_id=product_id,
                            product_type = product_type, product_rate = rate, gross_weight=gross_weight, 
                            net_weight=net_weight, labour_charges=labour_charge)
         db.session.add(item)
         items.append(item)
-        total_amount = total_amount + product.rate * net_weight + labour_charge * net_weight 
+
+        # Update the product's total quantity
+        if product.total_quantity >= net_weight:
+            product.total_quantity -= net_weight
+        else:
+            flash(f"Insufficient stock for {product.name}. Available: {product.total_quantity}, Required: {net_weight}", "error")
+            db.session.rollback()  # Rollback the session if not enough stock
+            return redirect(url_for('generate_invoice_page'))  # Redirect to the invoice page
+        
+        total_amount = total_amount + product.rate * net_weight + labour_charge * net_weight
     
     db.session.commit()
 
@@ -152,6 +206,10 @@ def generate_invoice():
     total_gst = cgst + sgst
     total_amount_with_gst = total_amount + total_gst
 
+    cgst = round(cgst, 2)
+    sgst = round(sgst, 2)
+    total_amount_with_gst = round(total_amount_with_gst, 2)
+
     rendered = render_template('invoice.html', invoice=invoice, items=items, 
                                total_amount=total_amount, cgst=cgst, sgst=sgst, 
                                total_amount_with_gst=total_amount_with_gst)
@@ -160,7 +218,9 @@ def generate_invoice():
     if not os.path.exists(pdf_folder):
         os.makedirs(pdf_folder)
     
-    pdf_filename = os.path.join(pdf_folder, f'invoice_{invoice.id}.pdf')
+    today = datetime.datetime.now().strftime('%d%m%Y')
+    pdf_filename = os.path.join(pdf_folder, f'{today}_{customer_contact}_{invoice.id}.pdf')
+
     pdf = pdfkit.from_string(rendered, False)
     with open(pdf_filename, 'wb') as f:
         f.write(pdf)
