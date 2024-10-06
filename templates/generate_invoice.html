@@ -7,8 +7,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Your Custom CSS -->
-    <link href="/static/css/styles.css" rel="stylesheet">
-    <meta charset="UTF-8">
+    <link href="/static/css/invoicestyles.css" rel="stylesheet">
     <title>Generate Invoice</title>
 </head>
 <body>
@@ -60,17 +59,20 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Product</th>
+                                        <th>Type</th>
                                         <th>Rate</th>
-                                        <th>Quantity</th>
+                                        <th>Gross Weight</th>
+                                        <th>Nett. Weight</th>
                                         <th>Total Price</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
+                                        <td><input type="text" class="form-control invoice_name" name="invoice_name[]" min="1" value="1"></td>
                                         <td>
                                             <select class="form-select product-dropdown" name="products[]">
-                                                <option value="">Select a product</option>
+                                                <option value="">Product Type</option>
                                                 {% for product in products %}
                                                 <option value="{{ product.id }}" data-rate="{{ product.rate }}">
                                                     {{ product.name }}
@@ -79,7 +81,8 @@
                                             </select>
                                         </td>
                                         <td class="rate">0</td>
-                                        <td><input type="text" class="form-control quantity" name="quantity[]" min="1" value="1"></td>
+                                        <td><input type="number" class="form-control gross_weight" name="gross_weight[]" step="any" value="1"></td>
+                                        <td><input type="number" class="form-control net_weight" name="net_weight[]" step="any" value="1"></td>
                                         <td class="total-price">0</td>
                                         <td><button type="button" class="btn btn-danger remove-row">Remove</button></td>
                                     </tr>
@@ -111,12 +114,80 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <!-- <footer class="bg-light">
-        <p>&copy; 2024 Invoice Management System</p>
-    </footer> -->
 
     <!-- Include JS for Bootstrap (optional) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Function to calculate total price based on rate and net weight
+            function calculateTotalPrice(row) {
+                let rate = parseFloat(row.querySelector('.rate').textContent) || 0;
+                let netWeight = parseFloat(row.querySelector('.net_weight').value) || 0;
+                let totalPrice = rate * netWeight;
+                row.querySelector('.total-price').textContent = totalPrice.toFixed(2);
+            }
+
+            // Function to attach event listeners to product dropdowns and net weight inputs
+            function attachEventListeners() {
+                document.querySelectorAll('.product-dropdown').forEach(function(dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        let rate = dropdown.selectedOptions[0].getAttribute('data-rate');
+                        let row = dropdown.closest('tr');
+                        row.querySelector('.rate').textContent = rate;
+                        calculateTotalPrice(row); // Recalculate total price when rate changes
+                    });
+                });
+
+                document.querySelectorAll('.net_weight').forEach(function(input) {
+                    input.addEventListener('input', function() {
+                        let row = input.closest('tr');
+                        calculateTotalPrice(row); // Recalculate total price when net weight changes
+                    });
+                });
+
+                document.querySelectorAll('.remove-row').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        let row = button.closest('tr');
+                        row.remove();
+                    });
+                });
+            }
+
+            // Call it for initial rows
+            attachEventListeners();
+
+            // Add new row when "Add Product" button is clicked
+            document.getElementById('addRow').addEventListener('click', function() {
+                const tableBody = document.querySelector('#invoiceTable tbody');
+                const newRow = document.createElement('tr');
+                
+                newRow.innerHTML = `
+                    <td><input type="text" class="form-control invoice_name" name="invoice_name[]" min="1" value="1"></td>
+                    <td>
+                        <select class="form-select product-dropdown" name="products[]">
+                            <option value="">Product Type</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}" data-rate="{{ product.rate }}">
+                                {{ product.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="rate">0</td>
+                    <td><input type="number" class="form-control gross_weight" name="gross_weight[]" min="1" value="1"></td>
+                    <td><input type="number" class="form-control net_weight" name="net_weight[]" min="1" value="1"></td>
+                    <td class="total-price">0</td>
+                    <td><button type="button" class="btn btn-danger remove-row">Remove</button></td>
+                `;
+                
+                tableBody.appendChild(newRow);
+
+                // Reattach event listeners for new dropdowns and inputs
+                attachEventListeners();
+            });
+        });
+    </script>
 </body>
 </html>

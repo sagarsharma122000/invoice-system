@@ -16,7 +16,7 @@ class Customer(db.Model):
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    hsn = db.Column(db.String(20), nullable=False)
+    total_quantity = db.Column(db.Float, nullable=False)
     rate = db.Column(db.Float, nullable=False)
     
     # Cascade delete to invoice items when a product is deleted
@@ -34,13 +34,13 @@ class Invoice(db.Model):
 
 class InvoiceItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    invoice_name = db.Column(db.String(10), nullable=False)
     invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id', ondelete="CASCADE"), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id', ondelete="CASCADE"), nullable=False)
+    product_type = db.Column(db.String(100), nullable=False)
     product_rate = db.Column(db.Float, nullable=False)
-    quantity = db.Column(db.Float, nullable=False)
     gross_weight = db.Column(db.Float, nullable=False)
     net_weight = db.Column(db.Float, nullable=False)
-    purity = db.Column(db.String(10), nullable=False)
     labour_charges = db.Column(db.Float, nullable=False)
     # cgst = db.Column(db.Float, nullable=False)
     # sgst = db.Column(db.Float, nullable=False)

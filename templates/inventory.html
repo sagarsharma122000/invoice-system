@@ -7,7 +7,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Your Custom CSS -->
-    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/static/css/instyles.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar -->
@@ -44,7 +44,7 @@
                                 <input type="text" name="name" class="form-control" placeholder="Product Name" required>
                             </div>
                             <div class="mb-3">
-                                <input type="text" name="hsn" class="form-control" placeholder="HSN" required>
+                                <input type="number" step="0.01" name="total_quantity" class="form-control" placeholder="Total Quantity" required>
                             </div>
                             <div class="mb-3">
                                 <input type="number" step="0.01" name="rate" class="form-control" placeholder="Rate" required>
@@ -58,7 +58,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>Name</th>
-                                    <th>HSN</th>
+                                    <th>Total Quantity</th>
                                     <th>Rate</th>
                                     <th>Actions</th>
                                 </tr>
@@ -67,7 +67,7 @@
                                 {% for product in products %}
                                 <tr>
                                     <td>{{ product.name }}</td>
-                                    <td>{{ product.hsn }}</td>
+                                    <td>{{ product.total_quantity }}</td>
                                     <td>{{ product.rate }}</td>
                                     <td>
                                         <form action="/delete_product/{{ product.id }}" method="POST" style="display:inline;">
@@ -97,7 +97,7 @@
                                                 {% for product in products %}
                                                 <option value="{{ product.id }}" 
                                                         data-name="{{ product.name }}" 
-                                                        data-hsn="{{ product.hsn }}" 
+                                                        data-total_quantity="{{ product.total_quantity }}" 
                                                         data-rate="{{ product.rate }}">
                                                     {{ product.name }}
                                                 </option>
@@ -107,8 +107,8 @@
                                             <label for="name" class="form-label">Product Name:</label>
                                             <input type="text" id="name" name="name" class="form-control" required>
 
-                                            <label for="hsn" class="form-label">HSN:</label>
-                                            <input type="text" id="hsn" name="hsn" class="form-control" required>
+                                            <label for="total_quantity" class="form-label">Total Quantity:</label>
+                                            <input type="number" id="total_quantity" name="total_quantity" class="form-control" required>
 
                                             <label for="rate" class="form-label">Rate:</label>
                                             <input type="number" id="rate" name="rate" class="form-control" required>
@@ -126,10 +126,10 @@
                         document.getElementById('submitUpdate').addEventListener('click', function () {
                             const productId = document.getElementById('selectProduct').value;
                             const name = document.getElementById('name').value;
-                            const hsn = document.getElementById('hsn').value;
+                            const total_quantity = document.getElementById('total_quantity').value;
                             const rate = document.getElementById('rate').value;
 
-                            if (productId && name && hsn && rate) {
+                            if (productId && name && total_quantity && rate) {
                                 // Send the updated product data to the server using fetch
                                 fetch(`/update_product/${productId}`, {
                                     method: 'POST',
@@ -138,7 +138,7 @@
                                     },
                                     body: JSON.stringify({
                                         name: name,
-                                        hsn: hsn,
+                                        total_quantity: total_quantity,
                                         rate: rate
                                     }),
                                 }).then(response => {
@@ -161,12 +161,12 @@
 
                             // Retrieve the data attributes from the selected option
                             var name = selectedProduct.getAttribute('data-name');
-                            var hsn = selectedProduct.getAttribute('data-hsn');
+                            var total_quantity = selectedProduct.getAttribute('data-total_quantity');
                             var rate = selectedProduct.getAttribute('data-rate');
 
                             // Autofill the form fields with the selected product's data
                             document.getElementById('name').value = name ? name : '';
-                            document.getElementById('hsn').value = hsn ? hsn : '';
+                            document.getElementById('total_quantity').value = total_quantity ? total_quantity : '';
                             document.getElementById('rate').value = rate ? rate : '';
                         });
                         </script>

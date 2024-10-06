@@ -28,10 +28,10 @@ def inventory():
 @app.route('/add_product', methods=['POST'])
 def add_product():
     name = request.form['name']
-    hsn = request.form['hsn']
+    total_quantity = float(request.form['total_quantity'])
     rate = float(request.form['rate'])
     
-    new_product = Product(name=name, hsn=hsn, rate=rate)
+    new_product = Product(name=name, total_quantity=total_quantity, rate=rate)
     db.session.add(new_product)
     db.session.commit()
     
@@ -46,7 +46,7 @@ def update_product(id):
 
         if data:
             product.name = data.get('name', product.name)
-            product.hsn = data.get('hsn', product.hsn)
+            product.total_quantity = float(data.get('total_quantity', product.total_quantity))
             product.rate = float(data.get('rate', product.rate))
 
             db.session.commit()
@@ -72,11 +72,6 @@ def delete_product(product_id):
     # Get the product or return a 404 error if not found
     product = Product.query.get_or_404(product_id)
 
-    # Check if there are any invoice items associated with this product
-    if product.items:  # Use 'items' as defined in the Product model
-        flash('Cannot delete product. There are invoices associated with it.', 'error')
-        return redirect(url_for('inventory_manage'))
-
     # If there are no associated invoice items, delete the product
     db.session.delete(product)
     db.session.commit()
@@ -90,7 +85,7 @@ def get_product(id):
     if product:
         return {
             'name': product.name,
-            'hsn': product.hsn,
+            'total_quantity': product.total_quantity,
             'rate': product.rate
         }
     return {}, 404
@@ -109,7 +104,9 @@ def generate_invoice():
     customer_address = request.form['customer_address']
     customer_contact = request.form['customer_contact']
     product_ids = request.form.getlist('products[]')
-    quantities = request.form.getlist('quantity[]')
+    gross_weights = request.form.getlist('gross_weight[]')
+    net_weights = request.form.getlist('net_weight[]')
+    invoice_name = request.form.getlist('invoice_name[]')
     
     customer = Customer(name=customer_name, address=customer_address, contact=customer_contact)
     db.session.add(customer)
@@ -126,13 +123,14 @@ def generate_invoice():
     total_amount = 0
     for idx, product_id in enumerate(product_ids):
         product = Product.query.get(product_id)
-        quantity = float(quantities[idx])
         rate  =  product.rate
-        gross_weight =  quantity
-        net_weight = abs(gross_weight)  # Example logic
-        item = InvoiceItem(invoice_id=invoice.id, product_id=product_id,product_rate = rate, 
-                           quantity=quantity, gross_weight=gross_weight, 
-                           net_weight=net_weight, purity="22K", labour_charges=labour_charge)
+        product_type = product.name
+        product_name = invoice_name[idx]
+        gross_weight = float(gross_weights[idx])
+        net_weight = float(net_weights[idx])
+        item = InvoiceItem(invoice_name = product_name, invoice_id=invoice.id, product_id=product_id,
+                           product_type = product_type, product_rate = rate, gross_weight=gross_weight, 
+                           net_weight=net_weight, labour_charges=labour_charge)
         db.session.add(item)
         items.append(item)
         total_amount = total_amount + product.rate * net_weight + labour_charge * net_weight 

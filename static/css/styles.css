@@ -1,38 +1,38 @@
+/* Background image settings */
 body {
-    background-image: url('/static/images/your-background-image.jpg'); /* Path to your image */
-    background-size: cover; /* Ensures the image covers the entire background */
-    background-position: center; /* Centers the image */
-    background-repeat: no-repeat; /* Prevents the image from repeating */
-    background-attachment: fixed; /* Keeps the background fixed while scrolling */
-    height: 100vh; /* Ensures the body height covers the full viewport */
-    padding-top: 56px; /* Adjust if you have a fixed navbar */
+    background-image: url('/static/images/background.jpg'); /* Ensure the path is correct */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh; /* Ensure it covers the whole viewport */
+    margin: 0;
+    padding: 0;
 }
 
-header {
-    margin-bottom: 20px;
+/* Remove background and padding from container */
+.container {
+    background-color: transparent; /* No white background */
+    padding: 0; /* Remove padding */
+    height: 100vh; /* Ensures the content container is full-height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-nav a.nav-link {
-    color: white;
-    font-weight: bold;
+/* Center the text in the middle of the screen */
+.text-center {
+    background-color: rgba(255, 255, 255, 0.7); /* Optional: Adds a slight transparency for readability */
+    padding: 20px;
+    border-radius: 10px;
 }
 
 footer {
-    background-color: #f8f9fa;
-    padding: 20px 0;
-    position: fixed;
+    background-color: transparent;
+    text-align: center;
+    color: #fff;
+    position: absolute;
     width: 100%;
     bottom: 0;
-    text-align: center;
-}
-
-.card {
-    margin-top: 20px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.container, .card {
-    background-color: rgba(255, 255, 255, 0.9); /* Adds a white semi-transparent background to cards and containers */
-    padding: 20px;
-    border-radius: 8px;
+    padding: 10px 0;
 }

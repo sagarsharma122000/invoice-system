@@ -1,8 +1,8 @@
-"""Create initial database schema
+"""Initial migration.
 
-Revision ID: a131760de12d
+Revision ID: 348e78fe66c9
 Revises: 
-Create Date: 2024-09-30 14:42:04.916303
+Create Date: 2024-10-06 18:59:50.190792
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a131760de12d'
+revision = '348e78fe66c9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,7 +28,7 @@ def upgrade():
     op.create_table('product',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
-    sa.Column('hsn', sa.String(length=20), nullable=False),
+    sa.Column('total_quantity', sa.Float(), nullable=False),
     sa.Column('rate', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
@@ -41,12 +41,13 @@ def upgrade():
     )
     op.create_table('invoice_item',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('invoice_name', sa.String(length=10), nullable=False),
     sa.Column('invoice_id', sa.Integer(), nullable=False),
     sa.Column('product_id', sa.Integer(), nullable=False),
-    sa.Column('quantity', sa.Float(), nullable=False),
+    sa.Column('product_type', sa.String(length=100), nullable=False),
+    sa.Column('product_rate', sa.Float(), nullable=False),
     sa.Column('gross_weight', sa.Float(), nullable=False),
     sa.Column('net_weight', sa.Float(), nullable=False),
-    sa.Column('purity', sa.String(length=10), nullable=False),
     sa.Column('labour_charges', sa.Float(), nullable=False),
     sa.ForeignKeyConstraint(['invoice_id'], ['invoice.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['product_id'], ['product.id'], ondelete='CASCADE'),
