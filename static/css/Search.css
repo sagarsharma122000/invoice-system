@@ -1,0 +1,148 @@
+/* Background settings for the body */
+body {
+    background-image: url('/static/images/background.jpg'); 
+    background-size: cover; /* Ensures the image covers the entire background */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    background-attachment: fixed; /* Keeps the background fixed while scrolling */
+    height: 100vh; /* Ensures the body height covers the full viewport */
+    padding-top: 56px; /* Adjust for fixed navbar */
+}
+
+/* Header styling */
+header {
+    margin-bottom: 20px;
+}
+
+/* Navbar styling */
+nav {
+    background-color: #343a40; /* Dark background for the navbar */
+    padding: 10px 20px; /* Padding for the navbar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+}
+
+nav a.nav-link {
+    color: white; /* White text for navbar links */
+    font-weight: bold; /* Bold font for navbar links */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+nav a.nav-link:hover {
+    color: #f8f9fa; /* Lighter color on hover */
+}
+
+/* Container styling */
+.container {
+    margin-top: 20px; /* Margin above the container */
+    max-width: 900px; /* Max width for the container */
+    padding: 20px; /* Padding for the container */
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Form styling */
+form {
+    display: flex; /* Use flexbox for layout */
+    justify-content: space-between; /* Space out form elements */
+    flex-wrap: wrap; /* Wrap elements on smaller screens */
+    gap: 20px; /* Gap between form elements */
+}
+
+form .form-control {
+    width: 100%; /* Full width for input fields */
+    max-width: 250px; /* Limit max width */
+    padding: 10px; /* Padding for input fields */
+    font-size: 1rem; /* Font size */
+    border: 1px solid #ddd; /* Light border */
+    border-radius: 4px; /* Rounded corners */
+    transition: border-color 0.3s ease; /* Smooth border color transition */
+}
+
+form .form-control:focus {
+    border-color: #007bff; /* Blue border on focus */
+}
+
+form button {
+    padding: 10px 20px; /* Padding for button */
+    font-size: 1rem; /* Font size */
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth background transition */
+}
+
+form button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* Search results table */
+table {
+    width: 100%; /* Full width for the table */
+    margin-top: 40px; /* Margin above the table */
+    border-collapse: collapse; /* Collapses borders */
+}
+
+table th, table td {
+    padding: 12px 15px; /* Padding for table cells */
+    border: 1px solid #ddd; /* Light border for cells */
+}
+
+table th {
+    background-color: #007bff; /* Blue background for headers */
+    color: rgb(5, 5, 5); /* White text for headers */
+    font-size: 1.1rem; /* Slightly larger font size for headers */
+    text-align: center; /* Center alignment */
+}
+
+table td {
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background for cells */
+    font-size: 1rem; /* Font size for cells */
+    text-align: center; /* Center alignment */
+}
+
+table tr:nth-child(even) td {
+    background-color: #f1f1f1; /* Light gray for even rows */
+}
+
+table a {
+    color: #007bff; /* Blue color for links */
+    text-decoration: none; /* No underline */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+table a:hover {
+    color: #0056b3; /* Darker blue on link hover */
+}
+
+/* No results message */
+.no-results {
+    margin-top: 40px; /* Margin above no results message */
+    text-align: center; /* Center alignment */
+    font-size: 1.2rem; /* Font size */
+    color: #666; /* Gray color */
+}
+
+/* Footer styling */
+footer {
+    background-color: #f8f9fa; /* Light background for footer */
+    padding: 20px 0; /* Padding for footer */
+    position: fixed; /* Fixed position */
+    width: 100%; /* Full width */
+    bottom: 0; /* Align to bottom */
+    text-align: center; /* Center alignment */
+}
+
+.card {
+    margin-top: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: max-content;
+}
+
+.container, .card {
+    background-color: rgba(255, 255, 255, 0.9); /* Adds a white semi-transparent background to cards and containers */
+    padding: 20px;
+    border-radius: 8px;
+}

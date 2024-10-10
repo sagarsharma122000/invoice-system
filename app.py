@@ -1,8 +1,10 @@
 from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, send_file, send_from_directory
-from models import db, Customer, Product, Invoice, InvoiceItem
-import pdfkit
+from models import Sales, db, Customer, Product, Invoice, InvoiceItem
+from playwright.async_api import async_playwright
 import os
-import datetime
+from datetime import datetime
+import inflect
+from sqlalchemy import func
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -13,6 +15,9 @@ db.init_app(app)
 
 from flask_migrate import Migrate
 migrate = Migrate(app, db)
+
+# Create an inflect engine
+p = inflect.engine()
 
 # Home page with buttons
 @app.route('/')
@@ -103,35 +108,69 @@ def generate_invoice_page():
 # Assuming your PDFs are saved in a 'PDF' folder in the project directory
 PDF_FOLDER = os.path.join(os.getcwd(), 'PDF')
 
-from datetime import datetime
-
 @app.route('/search_invoice', methods=['GET', 'POST'])
 def search_invoice():
-    pdf_files = []
+    search_results = []  # To store the extracted information from the filenames
     search_performed = False
-    
+
     if request.method == 'POST':
         search_date = request.form.get('search_date', '').strip()
         search_mobile = request.form.get('search_mobile', '').strip()
-        
-        # If search_date is provided, convert it from YYYY-MM-DD to DDMMYYYY
+
+        # Convert the search_date from YYYY-MM-DD to DDMMYYYY
         if search_date:
             try:
                 search_date = datetime.strptime(search_date, '%Y-%m-%d').strftime('%d%m%Y')
             except ValueError:
-                # Handle cases where the date format is incorrect
-                search_date = ''
-        
-        # Search the PDF folder for files that match the search criteria
+                search_date = ''  # Ignore if the date format is incorrect
+
+        # Search for matching PDFs in the folder
         if os.path.exists(PDF_FOLDER):
             for filename in os.listdir(PDF_FOLDER):
-                # Check if the file matches the search date and/or mobile number
-                if (search_date in filename) and (search_mobile in filename):
-                    pdf_files.append(filename)
+                # Ensure the filename is in the expected format
+                try:
+                    parts = filename.split('_')
+                    file_date, mobile, customer_name, invoice_id_with_extension = parts[0], parts[1], parts[2], parts[3]
+                    invoice_id = invoice_id_with_extension.split('.')[0]
+
+                    # Check if the file matches the search date and/or mobile number
+                    if (search_date in file_date) and (search_mobile in mobile):
+                        search_results.append({
+                            'filename': filename,
+                            'customer_name': customer_name,
+                            'mobile': mobile,
+                            'date': datetime.strptime(file_date, '%d%m%Y').strftime('%d-%m-%Y'),
+                            'invoice_id': invoice_id
+                        })
+                except IndexError:
+                    continue  # Skip files that don't match the expected format
 
         search_performed = True
 
-    return render_template('search_invoice.html', pdf_files=pdf_files, search_performed=search_performed)
+    return render_template('search_invoice.html', search_results=search_results, search_performed=search_performed)
+
+
+@app.route('/sales_history', methods=['GET', 'POST'])
+def sales_history():
+    sales = Sales.query.all()  # Fetch all sales data for the history section
+    
+    # Date filter section
+    if request.method == 'POST':
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        
+        # Query to aggregate by product_type for the given date range
+        filtered_sales = db.session.query(
+            Sales.product_type,
+            func.sum(Sales.quantity_sold).label('total_quantity'),
+            func.sum(Sales.total_amount).label('total_amount')
+        ).filter(Sales.date_of_selling.between(start_date, end_date)) \
+         .group_by(Sales.product_type).all()
+        
+        return render_template('sales_history.html', sales=sales, filtered_sales=filtered_sales)
+    
+    # Default: only show the history section if no date filter is applied
+    return render_template('sales_history.html', sales=sales)
 
 
 # Route to open/view the PDF files
@@ -139,10 +178,27 @@ def search_invoice():
 def view_pdf(filename):
     return send_from_directory(PDF_FOLDER, filename)
 
+async def generate_html_pdf(pdf_filename, html_filename):
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(headless=True)  # Launch headless Chromium browser
+        page = await browser.new_page()
+
+        # Open the local HTML file
+        await page.goto(f'file://{html_filename}')
+        await page.emulate_media(media="screen")
+        await page.pdf(
+            path=pdf_filename, 
+            format="A4", 
+            landscape=False,  # Specify landscape or portrait orientation
+            margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},  # Set margin to zero
+            print_background=True  # Ensure that background colors and images are printed
+        )
+
+        await browser.close()  # Ensure the browser closes properly
 
 # Generate Invoice
 @app.route('/generate_invoice', methods=['GET', 'POST'])
-def generate_invoice():
+async def generate_invoice():
     customer_name = request.form['customer_name']
     customer_address = request.form['customer_address']
     customer_contact = request.form['customer_contact']
@@ -178,10 +234,20 @@ def generate_invoice():
                            net_weight=net_weight, labour_charges=labour_charge)
         db.session.add(item)
         items.append(item)
+        
+        total_item_amount = (rate * net_weight)
+        sale = Sales(date_of_selling=datetime.now(),
+                 product_type=product.name,
+                 quantity_sold=net_weight,
+                 rate=rate,
+                 total_amount=total_item_amount)
+    
+        db.session.add(sale)
 
         # Update the product's total quantity
         if product.total_quantity >= net_weight:
             product.total_quantity -= net_weight
+            product.total_quantity = round(product.total_quantity,2)
         else:
             flash(f"Insufficient stock for {product.name}. Available: {product.total_quantity}, Required: {net_weight}", "error")
             db.session.rollback()  # Rollback the session if not enough stock
@@ -192,15 +258,17 @@ def generate_invoice():
     db.session.commit()
 
     cgst_value = request.form.get('cgst', '0')  
-    cgst = float(cgst_value) if cgst_value else 0  
+    cgst_value = float(cgst_value) if cgst_value else 0  
 
     sgst_value = request.form.get('sgst', '0')  
-    sgst = float(sgst_value) if sgst_value else 0 
-
-    if cgst > 0:
-        cgst = total_amount*cgst/100
-    if sgst > 0:
-        sgst = total_amount*sgst/100
+    sgst_value = float(sgst_value) if sgst_value else 0 
+    
+    cgst = 0
+    sgst = 0
+    if cgst_value > 0:
+        cgst = total_amount*cgst_value/100
+    if sgst_value > 0:
+        sgst = total_amount*sgst_value/100
 
     # Add up total GST if required
     total_gst = cgst + sgst
@@ -208,24 +276,30 @@ def generate_invoice():
 
     cgst = round(cgst, 2)
     sgst = round(sgst, 2)
-    total_amount_with_gst = round(total_amount_with_gst, 2)
+    total_amount_with_gst = int(round(total_amount_with_gst, 0))
+    words = p.number_to_words(total_amount_with_gst)
+    result = f"{words.replace(',', '').title()} Rupees"
 
     rendered = render_template('invoice.html', invoice=invoice, items=items, 
-                               total_amount=total_amount, cgst=cgst, sgst=sgst, 
-                               total_amount_with_gst=total_amount_with_gst)
+                               total_amount=total_amount, cgst=cgst, sgst=sgst,
+                               cgst_value = cgst_value, sgst_value = sgst_value,
+                               total_amount_with_gst=total_amount_with_gst, result = result)
     
     pdf_folder = os.path.join(os.getcwd(), 'PDF')
     if not os.path.exists(pdf_folder):
         os.makedirs(pdf_folder)
-    
-    today = datetime.datetime.now().strftime('%d%m%Y')
-    pdf_filename = os.path.join(pdf_folder, f'{today}_{customer_contact}_{invoice.id}.pdf')
 
-    pdf = pdfkit.from_string(rendered, False)
-    with open(pdf_filename, 'wb') as f:
-        f.write(pdf)
-    
+    today = datetime.now().strftime('%d%m%Y')
+    pdf_filename = os.path.join(pdf_folder, f'{today}_{customer_contact}_{customer_name}_{invoice.id}.pdf')
+
+    html_filename = os.path.join(pdf_folder, f'{today}_{customer_contact}_{customer_name}_{invoice.id}.html')
+    with open(html_filename, 'w') as f:
+        f.write(rendered)
+
+    await generate_html_pdf(pdf_filename,html_filename)
+    os.remove(html_filename)
     return send_file(pdf_filename)
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -44,3 +44,13 @@ class InvoiceItem(db.Model):
     labour_charges = db.Column(db.Float, nullable=False)
     # cgst = db.Column(db.Float, nullable=False)
     # sgst = db.Column(db.Float, nullable=False)
+
+
+class Sales(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date_of_selling = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    product_type = db.Column(db.String(100), nullable=False)
+    quantity_sold = db.Column(db.Float, nullable=False)
+    rate = db.Column(db.Float, nullable=False)
+    total_amount = db.Column(db.Float, nullable=False)  # Rate * Quantity Sold
+

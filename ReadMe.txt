@@ -25,3 +25,6 @@ pip install flask_sqlalchemy
 pip install pdfkit
 pip install Jinja2
 pip install Flask-Migrate
+pip install inflect
+python -m pip install pytest-playwright
+python -m playwright install chromium

@@ -11,10 +11,20 @@ body {
 header {
     margin-bottom: 20px;
 }
+nav {
+    background-color: #343a40; /* Dark background for the navbar */
+    padding: 10px 20px; /* Padding for the navbar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+}
 
 nav a.nav-link {
-    color: white;
-    font-weight: bold;
+    color: white; /* White text for navbar links */
+    font-weight: bold; /* Bold font for navbar links */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+nav a.nav-link:hover {
+    color: #f8f9fa; /* Lighter color on hover */
 }
 
 footer {
