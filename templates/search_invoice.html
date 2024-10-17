@@ -36,20 +36,24 @@
     </nav>
 
     <!-- Main content -->
-    <div class="container mt-5">
+    <div class="container">
         <div class="row">
             <div class="col-md-8 offset-md-2">
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="my-5 text-center">Search Invoices</h2>
+                <div class="card" style="width: 100%;">
+                    <div class="card-body" style="width: 100%;">
+                        <h2>Search Invoices</h2>
                         <form method="POST" action="/search_invoice" class="row g-3">
                             <div class="col-md-4">
                                 <label for="search_date" class="form-label">Date:</label>
-                                <input type="date" id="search_date" name="search_date" class="form-control">
+                                <!-- Use the value from previous submission (if any) -->
+                                <input type="date" id="search_date" name="search_date" class="form-control"
+                                    value="{{ request.form.search_date or '' }}">
                             </div>
                             <div class="col-md-4" style="margin-right: 50px;">
                                 <label for="search_mobile" class="form-label">Mobile Number:</label>
-                                <input type="text" id="search_mobile" name="search_mobile" class="form-control" placeholder="Enter Mobile Number">
+                                <!-- Use the value from previous submission (if any) -->
+                                <input type="text" id="search_mobile" name="search_mobile" class="form-control"
+                                    placeholder="Enter Mobile Number" value="{{ request.form.search_mobile or '' }}">
                             </div>
                             <div class="col-md-4 align-self-end">
                                 <button type="submit" class="btn btn-primary">Search</button>

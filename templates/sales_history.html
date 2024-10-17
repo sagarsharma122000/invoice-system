@@ -44,7 +44,7 @@
             <div class="col-md-8 offset-md-2">
                 <div class="card">
                     <div class="card-body">
-                        <h2 style="text-align: center;">Sales History</h2>
+                        <h2>Sales History</h2>
 
                         <!-- History Section: Display all sales -->
                         <div class="table-wrapper">
@@ -80,12 +80,16 @@
                             <div class="row align-items-end" style="margin-bottom: 10px;">
                                 <div class="col-md-4">
                                     <label for="start_date">Start Date</label>
-                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                                           value="{{ request.form.start_date or '' }}" required>
                                 </div>
+                                
                                 <div class="col-md-4">
                                     <label for="end_date">End Date</label>
-                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                                           value="{{ request.form.end_date or '' }}">
                                 </div>
+                                
                                 <div class="col-md-2">
                                     <button type="submit" class="btn btn-primary btn-block">Filter</button>
                                 </div>

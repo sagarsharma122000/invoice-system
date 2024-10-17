@@ -11,13 +11,11 @@
 <body>
     <div class="main">
         <table class="header">
-            {% if cgst > 0 or sgst > 0 %}
-                <th style="text-align: left; border-right: 2px solid rgba(255, 255, 240, 0.7);">GSTIN:</th>
-            {% else %}
-                <th style="text-align: left; border-right: 2px solid rgba(255, 255, 240, 0.7);"></th>
-            {% endif %}
-            <th style="text-align: center;">TAX INVOICE</th>
-            <th style="text-align: right; border-left: 2px solid rgba(255, 255, 240, 0.7);">Invoice #{{ invoice.id }}</th>
+            <tr style="border: none;">
+                <td>Invoice #{{ invoice.id }}</td>
+            </tr>
+            <th style="text-align: center;">ROUGHLY ESTIMATE</th>
+            
         </table>
 
         <div class="title">
@@ -42,10 +40,8 @@
 
         <div class="details">
             <section>
-                <p><strong>Customer Name:</strong> {{ invoice.customer.name }}</p>
+                <p><strong>Name:</strong> {{ invoice.customer.name }}</p>
                 <p><strong>Address:</strong> {{ invoice.customer.address }}</p>
-                <!-- <p><strong>Address:</strong> Jalandhar - Delhi, Grand Trunk Rd, Phagwara, Punjab 144411
-                    Lovely Professional University, address</p> -->
             </section>
             <section>
                 <p><strong>Contact:</strong> {{ invoice.customer.contact }}</p>
@@ -59,7 +55,7 @@
                         <tr>
                             <th>Item</th>
                             <th>Type</th>
-                            <th>Rate</th>
+                            <th>Rate/gm</th>
                             <th>Gross Wt (gm)</th>
                             <th>Net Wt (gm)</th>
                             <th>Labour/gm</th>
@@ -84,24 +80,11 @@
             </div>
 
             <div class="amount">
-                <section style="display: flex; text-align: right;">
-                    {% if cgst > 0 %}
-                    <h4>CGST: {{ cgst }}</h4>
-                    <h4>CGST%: {{ cgst_value }}</h4>
-                    {% endif %}
-                </section>
-                <section style="display: flex;text-align: right;">
-                    {% if sgst > 0 %}
-                    <h4>SGST: {{ sgst }}</h4>
-                    <h4>SGST%: {{ sgst_value }}</h4>
-                    {% endif %}
-                </section>
-
-                <h4 style="vertical-align: bottom;"><strong>Total Amount with GST:</strong> {{ total_amount_with_gst }}</h4>
+                <h4 style="vertical-align: bottom;"><strong>Total Amount:</strong> {{ total_amount_with_gst }} Rs</h4>
             </div>
 
             <div class="word_amount">
-                <h4><strong>Total Amount in Words:</strong> {{ result }}</h4>
+                <h4><strong>Total Amount in Words:</strong> {{ result }} Only</h4>
             </div>
         </div>
 

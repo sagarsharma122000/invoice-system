@@ -2,7 +2,7 @@ from flask import Flask, flash, jsonify, render_template, request, redirect, url
 from models import Sales, db, Customer, Product, Invoice, InvoiceItem
 from playwright.async_api import async_playwright
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import inflect
 from sqlalchemy import func
 
@@ -30,18 +30,25 @@ def inventory():
     products = Product.query.all()
     return render_template('inventory.html', products=products)
 
-# Add Product
 @app.route('/add_product', methods=['POST'])
 def add_product():
     name = request.form['name']
     total_quantity = float(request.form['total_quantity'])
     rate = float(request.form['rate'])
+
+    existing_product = Product.query.filter_by(name=name).first()
+    
+    if existing_product:
+        flash(f'Product "{name}" is already added!', 'error')
+        return redirect(url_for('inventory'))
     
     new_product = Product(name=name, total_quantity=total_quantity, rate=rate)
     db.session.add(new_product)
     db.session.commit()
     
+    flash(f'Product "{name}" has been added successfully!', 'success')
     return redirect(url_for('inventory'))
+
 
 # Update Product
 @app.route('/update_product/<int:id>', methods=['POST'])
@@ -57,7 +64,9 @@ def update_product(id):
 
             db.session.commit()
 
-            return jsonify({'message': 'Product updated successfully'}), 200
+            # return jsonify({'message': 'Product updated successfully'}), 200
+            flash(f'Product "{product.name}" updated successfully!', 'error')
+            return redirect(url_for('inventory'))
         else:
             return jsonify({'message': 'Invalid data'}), 400
     except Exception as e:
@@ -69,21 +78,19 @@ def update_product(id):
 
 @app.route('/inventory_manage')
 def inventory_manage():
-    products = Product.query.all()  # Fetch all products from the database
+    products = Product.query.all()  
     return render_template('inventory_manage.html', products=products)
 
 
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 def delete_product(product_id):
-    # Get the product or return a 404 error if not found
     product = Product.query.get_or_404(product_id)
 
-    # If there are no associated invoice items, delete the product
     db.session.delete(product)
     db.session.commit()
 
     flash('Product deleted successfully', 'success')
-    return redirect(url_for('inventory'))  # Redirect back to the inventory management page
+    return redirect(url_for('inventory'))  
 
 @app.route('/get_product/<int:id>')
 def get_product(id):
@@ -152,25 +159,35 @@ def search_invoice():
 
 @app.route('/sales_history', methods=['GET', 'POST'])
 def sales_history():
-    sales = Sales.query.all()  # Fetch all sales data for the history section
-    
+    # sales = Sales.query.all()
+    sales = Sales.query.order_by(Sales.date_of_selling.desc()).all()
+
+
     # Date filter section
     if request.method == 'POST':
-        start_date = request.form['start_date']
-        end_date = request.form['end_date']
-        
-        # Query to aggregate by product_type for the given date range
-        filtered_sales = db.session.query(
-            Sales.product_type,
-            func.sum(Sales.quantity_sold).label('total_quantity'),
-            func.sum(Sales.total_amount).label('total_amount')
-        ).filter(Sales.date_of_selling.between(start_date, end_date)) \
-         .group_by(Sales.product_type).all()
-        
-        return render_template('sales_history.html', sales=sales, filtered_sales=filtered_sales)
-    
-    # Default: only show the history section if no date filter is applied
+        # Get start date from the form and convert it to datetime
+        start_date_str = request.form['start_date']
+        end_date_str = request.form['end_date']
+
+        # Convert start_date and end_date to datetime objects
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d') if start_date_str else None
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d') if end_date_str else datetime.today()
+
+ 
+        end_date = end_date + timedelta(days=1) - timedelta(seconds=1)
+        if start_date:
+            filtered_sales = db.session.query(
+                Sales.product_type,
+                func.sum(Sales.quantity_sold).label('total_quantity'),
+                func.sum(Sales.total_amount).label('total_amount')
+            ).filter(Sales.date_of_selling >= start_date, 
+                     Sales.date_of_selling <= end_date) \
+             .group_by(Sales.product_type).all()
+            
+            return render_template('sales_history.html', sales=sales, filtered_sales=filtered_sales)
     return render_template('sales_history.html', sales=sales)
+
+
 
 
 # Route to open/view the PDF files
@@ -190,7 +207,7 @@ async def generate_html_pdf(pdf_filename, html_filename):
             path=pdf_filename, 
             format="A4", 
             landscape=False,  # Specify landscape or portrait orientation
-            margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},  # Set margin to zero
+            # margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},  # Set margin to zero
             print_background=True  # Ensure that background colors and images are printed
         )
 
