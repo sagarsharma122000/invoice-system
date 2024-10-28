@@ -3,7 +3,7 @@
 html {
     scroll-padding-top: 0px;
     scroll-behavior: smooth;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 body::before {
@@ -24,7 +24,7 @@ body::before {
 
 body {
     font-family: Poppins, sans-serif;
-    margin: 10px;
+    margin: 7px;
     border: 4px solid black;
     width: auto;
     max-width: 2480px;
@@ -40,7 +40,8 @@ body {
     /* margin-bottom: 20px; */
     /* overflow: auto; */
     overflow-wrap: break-word;
-    min-height: 550px;
+    min-height: 535px;
+    max-height: 550px;
     border-bottom: none;
 }
 
@@ -223,7 +224,7 @@ body {
     border-top: none;
     text-align: left;
     padding: 10px;
-    min-height: 40px;
+    min-height: 35px;
     vertical-align: bottom;
     background-color: rgba(255, 255, 240, 0.5);
     color: #333333;
@@ -239,7 +240,7 @@ body {
     text-align: center;
     border: 2px solid black;
     border-top: none;
-    height: 30px;
+    height: 28px;
     vertical-align: middle;
     background-color: #333333;
     color: #FFFFFF;

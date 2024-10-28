@@ -5,7 +5,8 @@ body {
     background-repeat: no-repeat; /* Prevents the image from repeating */
     background-attachment: fixed; /* Keeps the background fixed while scrolling */
     height: 100vh; /* Ensures the body height covers the full viewport */
-    padding-top: 56px; /* Adjust if you have a fixed navbar */
+    padding-top: 65px; /* Adjust if you have a fixed navbar */
+    width: 100%;
 }
 
 header {
@@ -42,13 +43,45 @@ footer {
     text-align: center;
 }
 
-.card {
+/* .card {
     margin-top: 20px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+} */
+/* 
+.container, .card {
+    background-color: rgba(255, 255, 255, 0.9); 
+    padding: 20px;
+    width: 100%;
+    border-radius: 8px;
+} */
+
+.container{
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.7);
 }
 
-.container, .card {
-    background-color: rgba(255, 255, 255, 0.9); /* Adds a white semi-transparent background to cards and containers */
-    padding: 20px;
-    border-radius: 8px;
+.card{
+    /* border: 2px solid black; */
+    margin-top: 80px;
+    margin-bottom: 56px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 20px;
+    padding-top: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    min-width: 600px;
+    max-width: 1400px;
+}
+
+.products{
+    width: 100%;
+    border-radius: 10px;
 }

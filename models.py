@@ -17,7 +17,7 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     total_quantity = db.Column(db.Float, nullable=False)
-    rate = db.Column(db.Float, nullable=False)
+    # rate = db.Column(db.Float, nullable=False)
     
     # Cascade delete to invoice items when a product is deleted
     items = db.relationship('InvoiceItem', backref='product', cascade="all, delete-orphan", passive_deletes=True)

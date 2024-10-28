@@ -15,7 +15,7 @@
                 <td>Invoice #{{ invoice.id }}</td>
             </tr>
             <th style="text-align: center;">ROUGHLY ESTIMATE</th>
-            
+
         </table>
 
         <div class="title">
@@ -27,7 +27,7 @@
                     <h1 style="vertical-align: top;">VAISHNO JEWELLERS</h1>
                 </div>
                 <div class="title2">
-                    <p>36/1, Ahata Aauliya, Motimahal, <br> 
+                    <p>36/1, Ahata Aauliya, Motimahal, <br>
                         Sarafa Bazar, Muzaffarnagar - 251001</p>
                     <p>+91 90456 09343</p>
                 </div>
@@ -59,20 +59,20 @@
                             <th>Gross Wt (gm)</th>
                             <th>Net Wt (gm)</th>
                             <th>Labour/gm</th>
-                            <th>Total</th>
+                            <th>Subtotal (Rs)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <br>
                         {% for item in items %}
                         <tr>
-                        <td>{{ item.invoice_name }}</td>
-                        <td>{{ item.product_type }}</td>
-                        <td>{{ item.product_rate }}</td>
-                        <td>{{ item.gross_weight }}</td>
-                        <td>{{ item.net_weight }}</td>
-                        <td>{{ item.labour_charges }}</td>
-                        <td>{{ item.net_weight * item.product_rate + item.labour_charges * item.net_weight}}</td>
+                            <td>{{ item.invoice_name }}</td>
+                            <td>{{ item.product_type }}</td>
+                            <td>{{ item.product_rate }}</td>
+                            <td>{{ item.gross_weight }}</td>
+                            <td>{{ item.net_weight }}</td>
+                            <td>{{ item.labour_charges }}</td>
+                            <td>{{ item.net_weight * item.product_rate + item.labour_charges * item.net_weight}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -80,11 +80,19 @@
             </div>
 
             <div class="amount">
-                <h4 style="vertical-align: bottom;"><strong>Total Amount:</strong> {{ total_amount_with_gst }} Rs</h4>
+                <h4 style="vertical-align: bottom;"><strong>Total Amount:</strong> {{ total_amount }} Rs</h4>
+                {% if discount_value > 0 %}
+                    <h4 style="vertical-align: bottom;"><strong>Discount Amount:</strong> {{ discount_value }} Rs</h4>
+                    <h4 style="vertical-align: bottom;"><strong>Total Amount After Discount:</strong> {{total_amount_with_discount }} Rs</h4>
+                {% endif %}
             </div>
 
             <div class="word_amount">
-                <h4><strong>Total Amount in Words:</strong> {{ result }} Only</h4>
+                {% if discount_value > 0 %}
+                    <h4><strong>Total Amount in Words:</strong> {{ result }} Only</h4>
+                {% else %}
+                    <h4><strong>Total Amount in Words:</strong> {{ resultWithoutDisc }} Only</h4>
+                {% endif %}
             </div>
         </div>
 

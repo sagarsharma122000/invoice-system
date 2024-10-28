@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {% for category, message in messages %}
+                <strong>{{ message }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <div class="container">
+        <div class="text-center">
+                <h1 class="my-5">VAISHNO JEWELLERS</h1>
+                <h1 class="my-5">Invoice Management System</h1>   
+            <form action="/login" method="POST">
+                <input type="password" name="pin" class="form-control my-3" placeholder="Enter PIN" required>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <!-- <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#addPinModal">Add PIN</button> -->
+            <button class="btn btn-link" data-bs-toggle="modal" data-bs-target="#changePinModal">Change PIN</button>
+        </div>
+    </div>
+
+    <!-- Change PIN Modal -->
+    <div class="modal fade" id="changePinModal" tabindex="-1" aria-labelledby="changePinLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/change_pin" method="POST">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changePinLabel">Change PIN</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="password" name="old_pin" class="form-control my-2" placeholder="Enter Old PIN" required>
+                        <input type="password" name="new_pin" class="form-control my-2" placeholder="Enter New PIN" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Change PIN</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

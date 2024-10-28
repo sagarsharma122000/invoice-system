@@ -1,10 +1,11 @@
-from flask import Flask, flash, jsonify, render_template, request, redirect, url_for, send_file, send_from_directory
+from flask import Flask, flash, jsonify, render_template, request, redirect, session, url_for, send_file, send_from_directory
 from models import Sales, db, Customer, Product, Invoice, InvoiceItem
 from playwright.async_api import async_playwright
 import os
 from datetime import datetime, timedelta
 import inflect
 from sqlalchemy import func
+from num2words import num2words
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -19,10 +20,63 @@ migrate = Migrate(app, db)
 # Create an inflect engine
 p = inflect.engine()
 
-# Home page with buttons
+PIN_FILE = 'pin.txt'  # Path to store the PIN securely
+
+# Global variable to track login status
+is_logged_in = False
+
+# Route to display the login page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    global is_logged_in
+    if request.method == 'POST':
+        if not os.path.exists(PIN_FILE):
+            flash('No PIN is set. Please create a PIN first.', 'warning')
+            return redirect(url_for('login'))
+        
+        pin = request.form['pin']
+        with open(PIN_FILE, 'r') as file:
+            saved_pin = file.read().strip()
+        
+        if pin == saved_pin:
+            is_logged_in = True  # Set login status to True on successful login
+            # flash('Login successful!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Incorrect PIN. Try again.', 'danger')
+    
+    return render_template('login.html')
+
+# Home route that checks login status
 @app.route('/')
 def home():
-    return render_template('home.html')
+    global is_logged_in
+    if is_logged_in:
+        return render_template('home.html')
+    else:
+        # Redirect to login if not logged in
+        return redirect(url_for('login'))
+    
+
+# Route to change the PIN
+@app.route('/change_pin', methods=['POST'])
+def change_pin():
+    old_pin = request.form['old_pin']
+    new_pin = request.form['new_pin']
+    if os.path.exists(PIN_FILE):
+        with open(PIN_FILE, 'r+') as file:
+            saved_pin = file.read().strip()
+            if old_pin == saved_pin:
+                file.seek(0)
+                file.write(new_pin)
+                file.truncate()
+                flash('PIN changed successfully!', 'success')
+            else:
+                flash('Incorrect old PIN.', 'danger')
+    else:
+        flash('No PIN is set. Use Add PIN first.', 'warning')
+    return redirect(url_for('login'))
+    
 
 # Inventory Management - View Products
 @app.route('/inventory')
@@ -34,7 +88,7 @@ def inventory():
 def add_product():
     name = request.form['name']
     total_quantity = float(request.form['total_quantity'])
-    rate = float(request.form['rate'])
+    # rate = float(request.form['rate'])
 
     existing_product = Product.query.filter_by(name=name).first()
     
@@ -42,7 +96,7 @@ def add_product():
         flash(f'Product "{name}" is already added!', 'error')
         return redirect(url_for('inventory'))
     
-    new_product = Product(name=name, total_quantity=total_quantity, rate=rate)
+    new_product = Product(name=name, total_quantity=total_quantity)
     db.session.add(new_product)
     db.session.commit()
     
@@ -60,7 +114,7 @@ def update_product(id):
         if data:
             product.name = data.get('name', product.name)
             product.total_quantity = float(data.get('total_quantity', product.total_quantity))
-            product.rate = float(data.get('rate', product.rate))
+            # product.rate = float(data.get('rate', product.rate))
 
             db.session.commit()
 
@@ -99,7 +153,6 @@ def get_product(id):
         return {
             'name': product.name,
             'total_quantity': product.total_quantity,
-            'rate': product.rate
         }
     return {}, 404
 
@@ -224,6 +277,9 @@ async def generate_invoice():
     net_weights = request.form.getlist('net_weight[]')
     invoice_name = request.form.getlist('invoice_name[]')
     labour_chargess = request.form.getlist('labour_charge[]')
+    prate = request.form.getlist('rate[]')
+
+    customer_contact = (customer_contact) if customer_contact else ""
     
     customer = Customer(name=customer_name, address=customer_address, contact=customer_contact)
     db.session.add(customer)
@@ -240,7 +296,7 @@ async def generate_invoice():
     total_amount = 0
     for idx, product_id in enumerate(product_ids):
         product = Product.query.get(product_id)
-        rate  =  product.rate
+        rate  = float(prate[idx])
         product_type = product.name
         product_name = invoice_name[idx]
         gross_weight = float(gross_weights[idx])
@@ -270,37 +326,46 @@ async def generate_invoice():
             db.session.rollback()  # Rollback the session if not enough stock
             return redirect(url_for('generate_invoice_page'))  # Redirect to the invoice page
         
-        total_amount = total_amount + product.rate * net_weight + labour_charge * net_weight
+        total_amount = total_amount + rate * net_weight + labour_charge * net_weight
     
     db.session.commit()
 
-    cgst_value = request.form.get('cgst', '0')  
-    cgst_value = float(cgst_value) if cgst_value else 0  
+    # cgst_value = request.form.get('cgst', '0')  
+    # cgst_value = float(cgst_value) if cgst_value else 0  
 
-    sgst_value = request.form.get('sgst', '0')  
-    sgst_value = float(sgst_value) if sgst_value else 0 
+    # sgst_value = request.form.get('sgst', '0')  
+    # sgst_value = float(sgst_value) if sgst_value else 0 
     
     cgst = 0
     sgst = 0
-    if cgst_value > 0:
-        cgst = total_amount*cgst_value/100
-    if sgst_value > 0:
-        sgst = total_amount*sgst_value/100
+    # if cgst_value > 0:
+    #     cgst = total_amount*cgst_value/100
+    # if sgst_value > 0:
+    #     sgst = total_amount*sgst_value/100
 
     # Add up total GST if required
     total_gst = cgst + sgst
-    total_amount_with_gst = total_amount + total_gst
+    total_amount_with_discount = total_amount + total_gst
+
+    discount_value = request.form.get('discount', '0')
+    discount_value = float(discount_value) if discount_value else 0 
+    discount_value = int(round(discount_value, 0)) 
+    total_amount_with_discount -= discount_value
+
 
     cgst = round(cgst, 2)
     sgst = round(sgst, 2)
-    total_amount_with_gst = int(round(total_amount_with_gst, 0))
-    words = p.number_to_words(total_amount_with_gst)
-    result = f"{words.replace(',', '').title()} Rupees"
+
+    total_amount = int(round(total_amount, 0))
+    resultWithoutDisc = num2words(total_amount, lang='en_IN').replace(",", "").title() + " Rupees"
+
+    total_amount_with_discount = int(round(total_amount_with_discount, 0))
+    result = num2words(total_amount_with_discount, lang='en_IN').replace(",", "").title() + " Rupees"
 
     rendered = render_template('invoice.html', invoice=invoice, items=items, 
                                total_amount=total_amount, cgst=cgst, sgst=sgst,
-                               cgst_value = cgst_value, sgst_value = sgst_value,
-                               total_amount_with_gst=total_amount_with_gst, result = result)
+                               discount_value = discount_value,
+                               total_amount_with_discount=total_amount_with_discount, result = result,resultWithoutDisc = resultWithoutDisc)
     
     pdf_folder = os.path.join(os.getcwd(), 'PDF')
     if not os.path.exists(pdf_folder):

@@ -28,3 +28,5 @@ pip install Flask-Migrate
 pip install inflect
 python -m pip install pytest-playwright
 python -m playwright install chromium
+pip install num2words
+
